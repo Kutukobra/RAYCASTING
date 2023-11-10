@@ -4,30 +4,34 @@
 #include <vector>
 
 #define DT GetFrameTime()
+#define RAY_MAX 10
+#define DIST_MAX 20
 
-const int GRID_SIZE = 20;
-char map[20][20] = 
+const int GRID_SIZE = 40;
+#define MAP_WIDTH 20
+#define MAP_HEIGHT 20
+char map[MAP_WIDTH][MAP_WIDTH] = 
 {
-    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',},
-    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',},
-    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',},
-    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',},
-    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',},
-    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ',},
-    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ',},
-    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ',},
-    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ',},
-    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',},
-    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',},
-    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',},
-    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',},
-    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',},
-    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',},
-    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',},
-    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',},
-    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',},
-    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',},
-    {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',}
+    {'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#',},
+    {'#',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','#',},
+    {'#',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','#',},
+    {'#',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','#',},
+    {'#',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','#',},
+    {'#',' ',' ',' ',' ',' ',' ',' ',' ',' ','#',' ',' ',' ',' ',' ',' ',' ',' ','#',},
+    {'#',' ',' ',' ',' ',' ',' ',' ',' ',' ','#',' ',' ',' ',' ',' ',' ',' ',' ','#',},
+    {'#',' ',' ',' ',' ',' ',' ',' ',' ',' ','#',' ',' ',' ',' ',' ',' ',' ',' ','#',},
+    {'#',' ',' ',' ',' ',' ',' ',' ',' ',' ','#','#',' ',' ',' ',' ',' ',' ',' ','#',},
+    {'#',' ',' ',' ',' ',' ',' ',' ',' ',' ','#','#',' ',' ',' ',' ',' ',' ',' ','#',},
+    {'#',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','#',' ',' ',' ',' ',' ',' ',' ','#',},
+    {'#',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','#',' ',' ',' ',' ',' ',' ',' ','#',},
+    {'#',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','#',},
+    {'#',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','#',},
+    {'#',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','#',},
+    {'#',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','#',},
+    {'#',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','#',},
+    {'#',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','#',},
+    {'#',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','#',},
+    {'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#',},
 };
 
 Vector2 operator+(Vector2 const& a, Vector2 const& b)
@@ -55,7 +59,7 @@ Vector2 operator*(Vector2 const& a, float s)
 
 Vector2 rad_to_vec(float rotation)
 {
-    return {(float)cos(rotation), (float)-sin(rotation)};
+    return {(float)cos(rotation), (float)sin(rotation)};
 }
 
 class Object {
@@ -75,13 +79,81 @@ class Ray2 {
     Vector2 origin;
     Vector2 dir;
     float length;
+    float angle;
 
     void Draw()
     {
         DrawLineV(origin * GRID_SIZE, (origin + dir * length) * GRID_SIZE, YELLOW);
     }
+
+    float shoot()
+    {
+        Vector2 xTarget;
+        Vector2 yTarget;
+        Vector2 xOffset;
+        Vector2 yOffset;
+        Vector2 xOffdir;
+        Vector2 yOffdir;
+    
+        /*===========VERTICAL===========*/
+        int xNeg = 0;
+        if (dir.x > 0)
+        {
+            xOffset.x  = (float)((int)origin.x + 1) - origin.x;
+            xOffdir.x = 1;
+        }
+        else
+        {
+            xOffset.x  = (float)((int)origin.x) - origin.x;
+            xOffdir.x = -1;
+            xNeg = -1;
+        }
+
+        /*==========HORIZONTAL==========*/
+        int yNeg = 0;
+        if (dir.y > 0)
+        {
+            yOffset.y  = (float)((int)origin.y + 1) - origin.y;
+            yOffdir.y = 1;
+        }
+        else
+        {
+            yOffset.y  = (float)((int)origin.y) - origin.y;
+            yOffdir.y = -1;
+            yNeg = -1;
+        }
+
+        xTarget = xOffset;
+        yTarget = yOffset;
+        for (int i = 0; i < DIST_MAX; i++)
+        {
+            xTarget.y = xTarget.x / dir.x * dir.y;
+            yTarget.x = yTarget.y / dir.y * dir.x;
+
+            //printf("%d: %c\n", i + 1, map[(int)(xTarget + origin).y][(int)(xTarget + origin).x]);
+            if (map[(int)(xTarget + origin).y][(int)(xTarget + origin).x + xNeg] == '#') break;
+            if (map[(int)(yTarget + origin).y][(int)(yTarget + origin).x + yNeg] == '#') break;
+
+            xTarget.x += xOffdir.x;
+            yTarget.y += yOffdir.y;
+            DrawCircleV((origin + xTarget) * GRID_SIZE, 5, YELLOW);
+            DrawCircleV((origin + yTarget) * GRID_SIZE, 5, RED);
+        }
+
+        DrawLineV(origin * GRID_SIZE, (origin + xTarget) * GRID_SIZE, BLACK);
+        DrawLineV(origin * GRID_SIZE, (origin + yTarget) * GRID_SIZE, BLACK);
+
+        return Vector2Distance({0, 0}, xTarget);
+    }
 };
 
+
+float fixedRotation(float rotation)
+{
+    if (rotation < 0)     rotation += 2*PI;
+    if (rotation >= 2*PI) rotation -= 2*PI;
+    return rotation;
+}
 
 class Player : public Object {
     private:
@@ -101,7 +173,7 @@ class Player : public Object {
         rotationSpeed = 5;
         movementSpeed = 5;
         FOV = PI/2;
-        ray_count = 80;
+        ray_count = 1;
         ray_gap = FOV / ray_count;
 
         for (int i = 0; i < ray_count; i++)
@@ -131,27 +203,29 @@ class Player : public Object {
 
         if (IsKeyDown(KEY_RIGHT))
         {
-            rotation -= rotationSpeed * DT;
+            rotation = fixedRotation(rotation + rotationSpeed * DT);
         }
 
         if (IsKeyDown(KEY_LEFT))
         {
-            rotation += rotationSpeed * DT;
+            rotation = fixedRotation(rotation - rotationSpeed * DT);
         }
+
+        if (IsKeyDown(KEY_SPACE)) system("pause");
         pos = pos + vel;
     }
     void Update()
     {
         Movement();
 
-        float ray_angle = -(FOV / 2);
+        float ray_angle = 0;//-(FOV / 2);
+        ray_angle += rotation;
         for (int i = 0; i < ray_count; i++)
         {
             rays[i].origin = pos;
-            rays[i].dir = rad_to_vec(rotation + ray_angle);
-            
-            rays[i].length = 10;
-
+            rays[i].angle = ray_angle;
+            rays[i].dir = rad_to_vec(ray_angle);     
+            rays[i].length = 0;       
             ray_angle += ray_gap;
         }
     }
@@ -162,8 +236,9 @@ class Player : public Object {
 
         for (Ray2 r : rays)
         {
-            r.Draw();
-            printf("%f %f\n", r.dir.x, r.dir.y);
+            r.shoot();
+            //r.Draw();
+            //printf("%f %f\n", r.dir.x, r.dir.y);
             //printf("%.2f %.2f to %.2f %.2f\n", r.origin.x, r.origin.y, (r.origin + r.dir * r.length).x, (r.origin + r.dir * r.length).y);
         }
     }
@@ -172,7 +247,7 @@ class Player : public Object {
 
 
 
-Player p({1, 1}, 0.5f);
+Player p({10, 10}, 0.5f);
 
 void Setup()
 {

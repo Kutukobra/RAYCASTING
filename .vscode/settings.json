@@ -3,6 +3,7 @@
         "inputs.h": "c",
         "raylib.h": "c",
         "drawing.h": "c",
-        "cmath": "cpp"
+        "cmath": "cpp",
+        "vector": "cpp"
     }
 }
