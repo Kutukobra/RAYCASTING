@@ -5,12 +5,12 @@
 
 #define DT GetFrameTime()
 #define RAY_MAX 10
-#define DIST_MAX 20
+#define DIST_MAX 10
 
-const int GRID_SIZE = 40;
+const int GRID_SIZE = 10;
 #define MAP_WIDTH 20
 #define MAP_HEIGHT 20
-char map[MAP_WIDTH][MAP_WIDTH] = 
+char map[MAP_HEIGHT][MAP_WIDTH] = 
 {
     {'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#',},
     {'#',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','#',},
@@ -34,14 +34,22 @@ char map[MAP_WIDTH][MAP_WIDTH] =
     {'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#',},
 };
 
+float capFloat(float a, float low, float high)
+{
+    if (a < low) return low;
+    if (a > high) return high;
+    return a;
+}
+
 Vector2 operator+(Vector2 const& a, Vector2 const& b)
 {
     return {a.x + b.x, a.y + b.y};
 }
 
-Vector2 operator+=(Vector2 const& a, Vector2 const& b)
+Vector2 operator+=(Vector2 & a, Vector2 const& b)
 {
-    return {a.x + b.x, a.y + b.y};
+    {a.x += b.x; a.y += b.y;};
+    return a;
 }
 
 Vector2 operator-(Vector2 const& a, Vector2 const& b)
@@ -59,7 +67,7 @@ Vector2 operator*(Vector2 const& a, float s)
 
 Vector2 rad_to_vec(float rotation)
 {
-    return {(float)cos(rotation), (float)sin(rotation)};
+    return {(float)(cos(rotation) + 0.00000001), (float)(sin(rotation) + 0.00000001)};
 }
 
 class Object {
@@ -80,70 +88,105 @@ class Ray2 {
     Vector2 dir;
     float length;
     float angle;
+    char hitType;
 
     void Draw()
     {
         DrawLineV(origin * GRID_SIZE, (origin + dir * length) * GRID_SIZE, YELLOW);
     }
 
-    float shoot()
+    void shoot()
     {
-        Vector2 xTarget;
-        Vector2 yTarget;
-        Vector2 xOffset;
-        Vector2 yOffset;
-        Vector2 xOffdir;
-        Vector2 yOffdir;
+        //Vector2 target;
+        Vector2 offset;
+        Vector2 xStepSize;
+        Vector2 yStepSize;
+        Vector2 xStep;
+        Vector2 yStep;
+        Vector2 len;
+        Vector2 lenStep;
+
+        float nTan = dir.y / dir.x;
+        float aTan = dir.x / dir.y;
     
         /*===========VERTICAL===========*/
-        int xNeg = 0;
+        bool xNeg = 0;
         if (dir.x > 0)
         {
-            xOffset.x  = (float)((int)origin.x + 1) - origin.x;
-            xOffdir.x = 1;
+            offset.x  = ceil(origin.x) - origin.x;
+            xStepSize.x = 1;
         }
         else
         {
-            xOffset.x  = (float)((int)origin.x) - origin.x;
-            xOffdir.x = -1;
-            xNeg = -1;
+            offset.x  = floor(origin.x) - origin.x;
+            xStepSize.x = -1;
+            xNeg = 1;
         }
+        offset.y = offset.x * nTan;
 
-        /*==========HORIZONTAL==========*/
-        int yNeg = 0;
+        xStepSize.y = nTan * xStepSize.x;
+        
+        xStep = origin + offset;
+        len.x = Vector2Length(offset);
+        lenStep.x = Vector2Length(xStepSize);
+        /*=================================*/
+
+
+        /*===========HORIZONTAL===========*/
+        bool yNeg = 0;
         if (dir.y > 0)
         {
-            yOffset.y  = (float)((int)origin.y + 1) - origin.y;
-            yOffdir.y = 1;
+            offset.y  = ceil(origin.y) - origin.y;
+            yStepSize.y = 1;
         }
         else
         {
-            yOffset.y  = (float)((int)origin.y) - origin.y;
-            yOffdir.y = -1;
-            yNeg = -1;
+            offset.y  = floor(origin.y) - origin.y;
+            yStepSize.y = -1;
+            yNeg = 1;
         }
+        offset.x = offset.y * aTan;
 
-        xTarget = xOffset;
-        yTarget = yOffset;
-        for (int i = 0; i < DIST_MAX; i++)
+        yStepSize.x = aTan * yStepSize.y;
+        
+        yStep = origin + offset;
+        len.y = Vector2Length(offset);
+        lenStep.y = Vector2Length(yStepSize);
+        /*=================================*/
+
+        for (int i = 0; i < 50; i++)
         {
-            xTarget.y = xTarget.x / dir.x * dir.y;
-            yTarget.x = yTarget.y / dir.y * dir.x;
+            if (len.x < len.y)
+            {   
+                hitType = map[(int)capFloat(xStep.y, 0, MAP_HEIGHT - 1)][(int)capFloat(xStep.x, 0, MAP_WIDTH - 1) - xNeg];
+                if (hitType != ' ') 
+                {
+                    length = len.x;
+                    break;
+                } 
 
-            //printf("%d: %c\n", i + 1, map[(int)(xTarget + origin).y][(int)(xTarget + origin).x]);
-            if (map[(int)(xTarget + origin).y][(int)(xTarget + origin).x + xNeg] == '#') break;
-            if (map[(int)(yTarget + origin).y][(int)(yTarget + origin).x + yNeg] == '#') break;
+                xStep += xStepSize;
+                len.x += lenStep.x;
+            }
+            else
+            {   
+                hitType = map[(int)capFloat(yStep.y, 0, MAP_HEIGHT - 1) - yNeg][(int)capFloat(yStep.x, 0, MAP_WIDTH - 1)];
+                if (hitType != ' ') 
+                {
+                    length = len.y;
+                    break;
+                }
+                
+                yStep += yStepSize;
+                len.y += lenStep.y;
+            }
 
-            xTarget.x += xOffdir.x;
-            yTarget.y += yOffdir.y;
-            DrawCircleV((origin + xTarget) * GRID_SIZE, 5, YELLOW);
-            DrawCircleV((origin + yTarget) * GRID_SIZE, 5, RED);
+            if (len.x >= DIST_MAX && len.y >= DIST_MAX) 
+            {
+                length = DIST_MAX;
+                break;
+            }
         }
-
-        DrawLineV(origin * GRID_SIZE, (origin + xTarget) * GRID_SIZE, BLACK);
-        DrawLineV(origin * GRID_SIZE, (origin + yTarget) * GRID_SIZE, BLACK);
-
-        return Vector2Distance({0, 0}, xTarget);
     }
 };
 
@@ -157,8 +200,8 @@ float fixedRotation(float rotation)
 
 class Player : public Object {
     private:
-    float radius;
     Vector2 d;
+    float radius;
     float rotationSpeed;
     float movementSpeed;
     float FOV;
@@ -170,10 +213,10 @@ class Player : public Object {
     public:
     Player(Vector2 _pos, float _radius) 
     : Object(_pos), radius(_radius) {
-        rotationSpeed = 5;
+        rotationSpeed = 2;
         movementSpeed = 5;
-        FOV = PI/2;
-        ray_count = 1;
+        FOV = 10 * PI / 18;
+        ray_count = 50;
         ray_gap = FOV / ray_count;
 
         for (int i = 0; i < ray_count; i++)
@@ -218,14 +261,14 @@ class Player : public Object {
     {
         Movement();
 
-        float ray_angle = 0;//-(FOV / 2);
+        float ray_angle = -(FOV / 2);
         ray_angle += rotation;
         for (int i = 0; i < ray_count; i++)
         {
             rays[i].origin = pos;
             rays[i].angle = ray_angle;
             rays[i].dir = rad_to_vec(ray_angle);     
-            rays[i].length = 0;       
+            rays[i].shoot();      
             ray_angle += ray_gap;
         }
     }
@@ -236,10 +279,20 @@ class Player : public Object {
 
         for (Ray2 r : rays)
         {
-            r.shoot();
-            //r.Draw();
-            //printf("%f %f\n", r.dir.x, r.dir.y);
-            //printf("%.2f %.2f to %.2f %.2f\n", r.origin.x, r.origin.y, (r.origin + r.dir * r.length).x, (r.origin + r.dir * r.length).y);
+            r.Draw();
+        }
+    }
+
+    void Draw()
+    {
+        float delta = GetScreenWidth() / ray_count;
+        float x = 0;
+        float height = 0;
+        for (Ray2 r : rays)
+        {
+            height = GetScreenHeight()/2 * (DIST_MAX / r.length);
+            DrawRectangle(x, (GetScreenHeight()/2 - height/2), delta, height, GREEN);
+            x += delta;
         }
     }
     
@@ -259,13 +312,13 @@ void Update()
     p.Update();
 }
 
-void DrawMap()
+void DrawMap(int x, int y)
 {
-    
+    DrawRectangle(x, y, MAP_WIDTH * GRID_SIZE, MAP_HEIGHT * GRID_SIZE, BLACK);
     for (int i = 0; i < 20; i++)
     for (int j = 0; j < 20; j++)
     {
-        DrawRectangle(j * GRID_SIZE + 1, i * GRID_SIZE + 1, GRID_SIZE - 2, GRID_SIZE - 2, map[i][j] == ' ' ? GRAY : GREEN);
+        DrawRectangle(x + j * GRID_SIZE + 1, y + i * GRID_SIZE + 1, GRID_SIZE - 2, GRID_SIZE - 2, map[i][j] == ' ' ? GRAY : GREEN);
     }
     p.DrawMapSprite();
 }
@@ -273,5 +326,7 @@ void DrawMap()
 void Draw()
 {
     ClearBackground(BLACK);
-    DrawMap();
+    p.Draw();
+
+    DrawMap(0, 0);
 }
